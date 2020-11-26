@@ -1,0 +1,52 @@
+{
+  "name": "exercise_tracker_mern",
+  "version": "1.0.0",
+  "description": "exercise tracker app with mern stack",
+  "main": "server.js",
+  "jest": {
+    "testEnvironment": "node"
+  },
+  "dependencies": {
+    "bcrypt": "^5.0.0",
+    "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "jest": "^26.5.3",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^5.10.7",
+    "multer": "^1.4.2",
+    "nodemailer": "^6.4.14",
+    "nodemon": "^2.0.4",
+    "supertest": "^5.0.0",
+    "validator": "^13.1.17"
+  },
+  "devDependencies": {
+    "jshint": "^2.12.0"
+  },
+  "scripts": {
+    "test": "jest --coverage   --watch",
+    "build": "cd client && npm run build",
+    "install-client": "cd client && npm install",
+    "heroku-postbuild": "npm run install-client && npm run build",
+    "start": "nodemon server.js"
+  },
+  "engines": {
+    "node": "12.x",
+    "npm": "6.x"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/prati-bha/Exercise_Tracker_MERN.git"
+  },
+  "keywords": [
+    "mern",
+    "exercise"
+  ],
+  "author": "pratibha_mahima",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/prati-bha/Exercise_Tracker_MERN/issues"
+  },
+  "homepage": "https://github.com/prati-bha/Exercise_Tracker_MERN#readme"
+}
