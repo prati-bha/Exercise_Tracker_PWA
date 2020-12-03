@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+
 import React, { Suspense } from "react";
 import {
   BrowserRouter as Router,

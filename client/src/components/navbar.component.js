@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+
 import { Button, Menu, MenuItem } from "@material-ui/core";
 import React, { Component } from "react";
 import { Link } from "react-router-dom";

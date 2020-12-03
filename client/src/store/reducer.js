@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+
 import { act } from "react-dom/test-utils";
 import * as actionTypes from "./actions";
 
