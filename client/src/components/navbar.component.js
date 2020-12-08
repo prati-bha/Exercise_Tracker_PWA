@@ -2,11 +2,12 @@
 
 import { Button, Menu, MenuItem } from "@material-ui/core";
 import React, { Component } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router-dom"
+import usernameContext from '../contexts/UsernameContext'
 import "../App.css";
-import { profile } from "../images";
 
 export default class Navbar extends Component {
+  static contextType = usernameContext;
   constructor(props) {
     super(props);
 
@@ -45,11 +46,11 @@ export default class Navbar extends Component {
                 Create Exercise Log
               </Link>
             </li>
-            <li className="navbar-item">
+            {this.context.username === null && <li className="navbar-item">
               <Link to="/user" className="nav-link">
                 Create User
               </Link>
-            </li>
+            </li>}
             {/* <li className="navbar-item">
               <Button
                 className="nav-btn"

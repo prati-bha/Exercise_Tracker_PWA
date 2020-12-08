@@ -1,6 +1,6 @@
 import React, { Component } from "react";
+import { withRouter } from 'react-router-dom';
 import axios from "axios";
-import { useHistory } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { TextField } from "@material-ui/core";
@@ -10,7 +10,7 @@ import "../App.css";
 import validator from "validator";
 
 toast.configure();
-export default class CreateUser extends Component {
+class CreateUser extends Component {
   static contextType = usernameContext
   constructor(props) {
     super(props);
@@ -72,22 +72,17 @@ export default class CreateUser extends Component {
   }
 
   onSubmit(e) {
-    const { history } = useHistory();
     e.preventDefault();
-
     const user = {
       username: this.state.username,
     };
-
-    console.log(user);
-
     axios
       .post(ENDPOINTS.CHECK_USERNAME, user, {
         headers: this.context.token,
       })
       .then((res) => {
         this.notify("User Added!");
-        history.push("/create");
+        this.props.history.push("/create");
         return console.log(res.data);
       });
 
@@ -134,3 +129,5 @@ export default class CreateUser extends Component {
     );
   }
 }
+
+export default withRouter(CreateUser);

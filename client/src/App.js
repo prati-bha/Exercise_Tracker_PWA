@@ -39,7 +39,8 @@ function App() {
 
 
   const {
-    token
+    token,
+    username
   } = useUsernameContext();
   return (
     <div className="container">
@@ -99,7 +100,7 @@ function App() {
               token === null ? (
                 <Redirect to="/login" />
               ) : (
-                  <CreateUser />
+                  username ? <Redirect to="/" /> : <CreateUser />
                 )
             }
 
