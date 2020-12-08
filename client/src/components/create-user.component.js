@@ -1,14 +1,17 @@
 import React, { Component } from "react";
 import axios from "axios";
+import { useHistory } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { TextField } from "@material-ui/core";
-import { ENDPOINTS, getToken } from "../constant";
+import { ENDPOINTS } from "../constant";
+import usernameContext from '../contexts/UsernameContext'
 import "../App.css";
 import validator from "validator";
 
 toast.configure();
 export default class CreateUser extends Component {
+  static contextType = usernameContext
   constructor(props) {
     super(props);
 
@@ -56,7 +59,7 @@ export default class CreateUser extends Component {
     }
     axios
       .get(`${ENDPOINTS.CHECK_USERNAME}?username=${e.target.value}`, {
-        headers: getToken,
+        headers: this.context.token,
       })
       .then((res) => this.setState({ error: false, unique: true }))
       .catch((err) =>
@@ -69,7 +72,7 @@ export default class CreateUser extends Component {
   }
 
   onSubmit(e) {
-    const { history } = this.props;
+    const { history } = useHistory();
     e.preventDefault();
 
     const user = {
@@ -80,7 +83,7 @@ export default class CreateUser extends Component {
 
     axios
       .post(ENDPOINTS.CHECK_USERNAME, user, {
-        headers: getToken,
+        headers: this.context.token,
       })
       .then((res) => {
         this.notify("User Added!");

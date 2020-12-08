@@ -20,6 +20,7 @@ import Login from "./components/Login";
 import Signup from "./components/Signup";
 import NotFound from "./components/404/NotFound";
 import Profile from "./components/User/Profile";
+import { useUsernameContext } from './contexts/UsernameContext'
 
 //Lazy load components
 // const EditExercise = React.lazy(() =>
@@ -35,6 +36,11 @@ import Profile from "./components/User/Profile";
 // );
 
 function App() {
+
+
+  const {
+    token
+  } = useUsernameContext();
   return (
     <div className="container">
       <Router>
@@ -45,7 +51,7 @@ function App() {
             path="/"
             exact
             render={() =>
-              localStorage.getItem("token") === null ? (
+              token === null ? (
                 <Redirect to="/login" />
               ) : (
                   <ExercisesList />
@@ -56,7 +62,7 @@ function App() {
           <Route
             path="/edit/:id"
             render={() =>
-              localStorage.getItem("token") === null ? (
+              token === null ? (
                 <Redirect to="/login" />
               ) : (
                   <EditExercise />
@@ -73,7 +79,7 @@ function App() {
           <Route
             path="/create"
             render={() =>
-              localStorage.getItem("token") === null ? (
+              token === null ? (
                 <Redirect to="/login" />
               ) : (
                   <CreateExercise />
@@ -90,7 +96,7 @@ function App() {
           <Route
             path="/user"
             render={() =>
-              localStorage.getItem("token") === null ? (
+              token === null ? (
                 <Redirect to="/login" />
               ) : (
                   <CreateUser />
@@ -107,7 +113,7 @@ function App() {
           <Route
             path="/profile"
             render={() =>
-              localStorage.getItem("token") === null ? (
+              token === null ? (
                 <Redirect to="/login" />
               ) : (
                   <Profile />

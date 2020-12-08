@@ -7,7 +7,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { withRouter } from "react-router-dom";
-import { ENDPOINTS, getToken } from "../constant";
+import { ENDPOINTS } from "../constant";
 import {
   FormControl,
   FormHelperText,
@@ -18,9 +18,11 @@ import {
 } from "@material-ui/core";
 import moment from "moment";
 import CustomizedDialogs from "./Modal/Modal";
+import usernameContext from '../contexts/UsernameContext'
 
 toast.configure();
 class EditExercise extends Component {
+  static contextType = usernameContext
   constructor(props) {
     super(props);
 
@@ -42,14 +44,15 @@ class EditExercise extends Component {
   }
 
   componentDidMount() {
-    if (localStorage.getItem("username") === null) {
+
+    if (this.context.username === null) {
       this.setState({
         hasUsername: false,
       });
     }
     axios
       .get(`${ENDPOINTS.EXERCISES}/${this.props.match.params.id}`, {
-        headers: getToken,
+        headers: this.context.token,
       })
       .then((response) => {
         this.setState({
@@ -120,7 +123,7 @@ class EditExercise extends Component {
 
     axios
       .post(ENDPOINTS.UPDATE_EXERCISE + this.props.match.params.id, exercise, {
-        headers: getToken,
+        headers: this.context.token,
       })
       .then((res) => {
         this.notify("Exercise Updated!");

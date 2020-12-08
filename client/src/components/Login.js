@@ -1,13 +1,18 @@
 import { TextField } from "@material-ui/core";
 import React, { Component } from "react";
+import {
+  Link
+} from "react-router-dom";
 import validator from "validator";
 import axios from "axios";
 import { ENDPOINTS } from "../constant";
 import { toast } from "react-toastify";
+import usernameContext from '../contexts/UsernameContext'
 
 toast.configure();
 
 export class Login extends Component {
+  static contextType = usernameContext
   constructor(props) {
     super(props);
 
@@ -51,20 +56,19 @@ export class Login extends Component {
   }
 
   onSubmit(e) {
-    const { history } = this.props;
     e.preventDefault();
-
+    const { history } = this.props;
     const user = {
       email: this.state.email,
       password: this.state.password,
     };
-
     // TODO add endpoint for login
+
     axios.post(`${ENDPOINTS.LOGIN}`, user).then((response) => {
-      console.log('response', response.data)
-      localStorage.setItem("token", response.data.token);
+      this.context.setToken(response.data.token);
+      console.log(this.context)
       if (response.data.user.username) {
-        localStorage.setItem("username", response.data.user.username);
+        this.context.setUsername(response.data.user.username);
         this.notify("Logged In Successfully!");
         history.push("/");
       } else {
@@ -114,6 +118,7 @@ export class Login extends Component {
             />
           </div>
         </form>
+        <h5>New to ExcerTracker : <Link to="/signup">Sign Up</Link></h5>
       </div>
     );
   }
