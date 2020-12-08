@@ -31,50 +31,50 @@ export class Signup extends Component {
     };
   }
 
-  onChangeName(e) {
-    this.setState(
-      {
-        username: "",
-        errorMessage: {
-          ...this.state.errorMessage,
-          username: "",
-        },
-      },
-      () => console.log(this.state)
-    );
-    if (e.target.value && !validator.isAlphanumeric(e.target.value)) {
-      this.setState({
-        errorMessage: {
-          ...this.state.errorMessage,
-          username: "Username should be alphanumeric",
-        },
-      });
-    }
-    if (e.target.value.length > 8) {
-      this.setState({
-        errorMessage: {
-          ...this.state.errorMessage,
-          username: "Maximum length should be 8",
-        },
-      });
-    }
-    this.setState({
-      username: e.target.value,
-    });
-    axios
-      .get(`${ENDPOINTS.CHECK_USERNAME}?username=${e.target.value}`)
-      .then((res) => this.setState({ error: false, unique: true }))
-      .catch((err) =>
-        this.setState({
-          error: true,
-          uniqueUsername: false,
-          errorMessage: {
-            ...this.state.errorMessage,
-            username: "Already exists",
-          },
-        })
-      );
-  }
+  // onChangeName(e) {
+  //   this.setState(
+  //     {
+  //       username: "",
+  //       errorMessage: {
+  //         ...this.state.errorMessage,
+  //         username: "",
+  //       },
+  //     },
+  //     () => console.log(this.state)
+  //   );
+  //   if (e.target.value && !validator.isAlphanumeric(e.target.value)) {
+  //     this.setState({
+  //       errorMessage: {
+  //         ...this.state.errorMessage,
+  //         username: "Username should be alphanumeric",
+  //       },
+  //     });
+  //   }
+  //   if (e.target.value.length > 8) {
+  //     this.setState({
+  //       errorMessage: {
+  //         ...this.state.errorMessage,
+  //         username: "Maximum length should be 8",
+  //       },
+  //     });
+  //   }
+  //   this.setState({
+  //     username: e.target.value,
+  //   });
+  //   axios
+  //     .get(`${ENDPOINTS.CHECK_USERNAME}?username=${e.target.value}`)
+  //     .then((res) => this.setState({ error: false, unique: true }))
+  //     .catch((err) =>
+  //       this.setState({
+  //         error: true,
+  //         uniqueUsername: false,
+  //         errorMessage: {
+  //           ...this.state.errorMessage,
+  //           username: "Already exists",
+  //         },
+  //       })
+  //     );
+  // }
 
   onChangeEmail(e) {
     this.setState(

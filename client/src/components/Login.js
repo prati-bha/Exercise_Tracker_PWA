@@ -65,7 +65,8 @@ export class Login extends Component {
     // TODO add endpoint for login
 
     axios.post(`${ENDPOINTS.LOGIN}`, user).then((response) => {
-      this.context.setToken(response.data.token);
+      const token = { Authorization: `Bearer ${response.data.token}` };
+      this.context.setToken(token);
       console.log(this.context)
       if (response.data.user.username) {
         this.context.setUsername(response.data.user.username);

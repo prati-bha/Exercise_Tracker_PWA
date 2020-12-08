@@ -85,7 +85,6 @@ export default class ExercisesList extends Component {
     this.setState({
       loading: true,
     });
-    console.log(this.context)
     const token = this.context.token
     axios
       .get(
@@ -95,7 +94,6 @@ export default class ExercisesList extends Component {
         }
       )
       .then((response) => {
-        console.log("coming here")
         this.setState({
           hasNext: this.checkDataLimit(response.data),
           loading: false,
@@ -131,7 +129,7 @@ export default class ExercisesList extends Component {
       .get(
         `${ENDPOINTS.EXERCISES}?pageNum=${this.state.pageNum}&limit=${this.state.limit}`,
         {
-          headers: this.context.token,
+          headers: 'abcd',
         }
       )
       .then((response) => {
