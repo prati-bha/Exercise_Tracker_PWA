@@ -45,33 +45,31 @@ router.get('/', auth, async (req, res) => {
 });
 
 router.post('/add', auth, (req, res) => {
-    const username = req.body.username;
+    const username = req.user.username;
     const description = req.body.description;
     const duration = Number(req.body.duration);
     const date = Date.parse(req.body.date);
     let validArray = [];
     const isUsernameAdded = checkUsername(username);
+    validArray.push(description.length <= 250);
     if (isUsernameAdded) {
-        isUserAlreadyAvailable(username).then((data) => {
-            validArray.push(data);
-            validArray.push(description.length <= 250);
-            if (validArray.every((element) => element === true)) {
-                const newExercise = new Exercise({
-                    username,
-                    description,
-                    duration,
-                    date,
-                });
+        validArray.push(description.length <= 250);
+        if (validArray.every((element) => element === true)) {
+            const newExercise = new Exercise({
+                username,
+                description,
+                duration,
+                date,
+            });
 
-                newExercise.save()
-                    .then(() => res.json('Exercise added!'))
-                    .catch(err => res.status(400).json('Error: ' + err));
-            } else {
-                res.status(400).send({
-                    message: "Invalid Input"
-                })
-            }
-        })
+            newExercise.save()
+                .then(() => res.json('Exercise added!'))
+                .catch(err => res.status(400).json('Error: ' + err));
+        } else {
+            res.status(400).send({
+                message: "Invalid Input"
+            })
+        }
     } else {
         res.status(400).send({
             message: "Add Username First"
