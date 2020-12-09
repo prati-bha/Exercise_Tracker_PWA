@@ -68,7 +68,7 @@ export class Login extends Component {
       const token = { Authorization: `Bearer ${response.data.token}` };
       this.context.setToken(token);
       console.log(this.context)
-      if (response.data.user.username) {
+      if (response.data.user && response.data.user.username) {
         this.context.setUsername(response.data.user.username);
         this.notify("Logged In Successfully!");
         history.push("/");

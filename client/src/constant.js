@@ -1,5 +1,5 @@
 // export const API_URL = "https://exercise-tracker-mern-stack.herokuapp.com";
-export const API_URL = "http://localhost:2810";
+export const API_URL = "http://localhost:2910";
 
 export const ENDPOINTS = {
   LOGIN: `${API_URL}/users/login`,
