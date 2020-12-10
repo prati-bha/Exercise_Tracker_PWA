@@ -2,7 +2,9 @@
 
 import { Button, Menu, MenuItem } from "@material-ui/core";
 import React, { Component } from "react";
-import { Link } from "react-router-dom"
+import { Link } from "react-router-dom";
+import axios from "axios";
+import { ENDPOINTS } from "../constant";
 import usernameContext from '../contexts/UsernameContext'
 import "../App.css";
 
@@ -29,6 +31,16 @@ export default class Navbar extends Component {
   };
 
   render() {
+    const logoutUser = () => {
+      axios
+        .get(`${ENDPOINTS.LOGOUT}`, {
+          headers: this.context.token,
+        })
+        .then((res) => { if (res.status === 200) { this.context.setToken(null); this.context.setUsername(null); } })
+        .catch((err) =>
+          console.log(err)
+        );
+    }
     return (
       <nav className="navbar navbar-dark bg-dark navbar-expand-lg">
         <Link to="/" className="navbar-brand">
@@ -51,30 +63,16 @@ export default class Navbar extends Component {
                 Create User
               </Link>
             </li>}
-            {/* <li className="navbar-item">
-              <Button
-                className="nav-btn"
-                aria-controls="simple-menu"
-                aria-haspopup="true"
-                onClick={this.handleClick}
-              >
-                <img src={profile} alt="profile" className="nav-img"></img>
-              </Button>
-              <Menu
-                id="simple-menu"
-                anchorEl={this.state.anchorEl}
-                keepMounted
-                open={Boolean(this.state.anchorEl)}
-                onClose={this.handleClose}
-              >
-                <MenuItem>Profile</MenuItem>
-                <MenuItem>My account</MenuItem>
-                <MenuItem>Logout</MenuItem>
-              </Menu>
-            </li> */}
           </ul>
-        </div>
-      </nav>
+          {this.context.token !== null && <ul className="navbar-nav  ">
+            <li className="navbar-item ml-auto text-secondary align-self-center " onClick={logoutUser}>
+              <Link to="/login" className="nav-link">
+                Logout
+              </Link>
+            </li>
+          </ul>}
+        </div >
+      </nav >
     );
   }
 }

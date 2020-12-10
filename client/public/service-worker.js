@@ -58,7 +58,6 @@ this.addEventListener('fetch', async (event) => {
             }))
     }
     else if (navigator.onLine) {
-        console.log("online")
         event.respondWith(
             caches.match(event.request).then(function (response) {
                 if (response) {
@@ -83,13 +82,13 @@ this.addEventListener('fetch', async (event) => {
             }))
     }
     else {
-        console.log("offline")
         event.respondWith(
             caches.match(event.request).then(function (response) {
                 if (response) {
                     return response
-                } else if (event.request.headers.get('accept').includes('text/html')) {
-                    return cache.match('/offline.html');
+                }
+                else if (event.request.headers.get('accept').includes('text/html')) {
+                    return caches.match('/offline.html');
                 } else {
                     return new Response();
                 }
