@@ -10,6 +10,7 @@
     "@testing-library/user-event": "^7.2.1",
     "axios": "^0.21.0",
     "babel-jest": "^24.9.0",
+    "base64-arraybuffer": "^0.2.0",
     "bootstrap": "^4.5.3",
     "jest": "24.9.0",
     "moment": "^2.29.0",
@@ -22,13 +23,15 @@
     "react-toastify": "^6.0.8",
     "react-waypoint": "^9.0.3",
     "redux": "^4.0.5",
-    "validator": "^13.1.17"
+    "validator": "^13.1.17",
+    "web-push": "^3.4.4"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "web-push": "web-push generate-vapid-keys"
   },
   "eslintConfig": {
     "extends": "react-app"

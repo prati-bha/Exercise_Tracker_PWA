@@ -9,7 +9,8 @@ export const ENDPOINTS = {
   EXERCISES: `${API_URL}/exercises`,
   ADD_EXERCISE: `${API_URL}/exercises/add`,
   UPDATE_EXERCISE: `${API_URL}/exercises/update/`,
-  LOGOUT: `${API_URL}/users/logout`
+  LOGOUT: `${API_URL}/users/logout`,
+  SUBSCRIBE: `${API_URL}/users/subscribe`,
 };
 
 export const getToken = {

@@ -3,7 +3,14 @@ const validate = require('validator');
 const User = require('../models/user.model');
 const auth = require('../middlewares/auth')
 const multer = require('multer');
+const webPush = require('web-push');
 const { sendWelcomeEmail } = require('../middlewares/email')
+const vapidKeys = {
+    publicVapidKey: "BIiXsNrUfJ4v4kIwiShRyslSi742Z9AkC_P4bgkUOzz1NSjvI85kXAU_-fXn5xaqkfTzSQLFZmgCo5QW2GAx6Xk",
+    privateVapidKey: "9yei0oj89YM4g_ytJGWCidfEPZGNa7yaVO0-PmJaCJo"
+}
+
+let subscription = null
 /**Check Unique Username */
 
 const sendResponse = async (isUnique, res, req) => {
@@ -137,6 +144,18 @@ router.post('/username', auth, (req, res) => {
             message: error
         })
     }
+});
+
+router.post('/subscribe', (req, res) => {
+    webPush.setVapidDetails('mailto:pratibha.h@innovify.in', vapidKeys.publicVapidKey, vapidKeys.privateVapidKey);
+    subscription = req.body
+    const payload = JSON.stringify({
+        title: 'Push notifications with Service Workers',
+        content: "new notification"
+    });
+    webPush.sendNotification(subscription.body, payload)
+        .catch(error => console.error(error));
+    res.status(201).json({});
 });
 /**Add Username Api */
 

@@ -18,7 +18,6 @@ toast.configure();
 
 const Exercise = (props) => (
   <tr>
-    <td>{props.exercise.username}</td>
     <div className="desc">
       <td>{props.exercise.description}</td>
     </div>
@@ -167,7 +166,6 @@ export default class ExercisesList extends Component {
         <table className="table">
           <thead className="thead-light">
             <tr>
-              <th>Username</th>
               <th>Description</th>
               <th>Duration</th>
               <th>Date</th>

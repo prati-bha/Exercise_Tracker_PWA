@@ -10,6 +10,9 @@
 // To learn more about the benefits of this model and instructions on how to
 // opt-in, read https://bit.ly/CRA-PWA
 
+import { ENDPOINTS } from "./constant";
+import axios from 'axios';
+
 const isLocalhost = Boolean(
   window.location.hostname === 'localhost' ||
   // [::1] is the IPv6 localhost address.
@@ -19,6 +22,60 @@ const isLocalhost = Boolean(
     /^127(?:\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$/
   )
 );
+const subscribeToServer = (sub) => {
+  console.log("3")
+  const payload = {
+    body: sub
+  }
+  return axios
+    .post(`${ENDPOINTS.SUBSCRIBE}`, payload)
+    .then((response) => {
+      if (response.ok) {
+        return true
+      }
+    })
+    .catch((error) => {
+      return false
+    });
+}
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/-/g, '+')
+    .replace(/_/g, '/');
+
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+const configurePushSub = (swReg) => {
+  if (!('serviceWorker' in navigator)) {
+    return;
+  }
+  swReg.pushManager.getSubscription().then((sub) => {
+    if (sub === null) {
+      const VAPID_PUBLIC_KEY = "BIiXsNrUfJ4v4kIwiShRyslSi742Z9AkC_P4bgkUOzz1NSjvI85kXAU_-fXn5xaqkfTzSQLFZmgCo5QW2GAx6Xk"
+      console.log(urlBase64ToUint8Array(VAPID_PUBLIC_KEY))
+      swReg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      }).then((newSubscription) => {
+        if (subscribeToServer(newSubscription)) {
+          console.log("successfully subscribed")
+        }
+      });
+      // new server
+    } else {
+      console.log("it is already subscribed")
+      //alreaddy available
+    }
+  })
+}
 
 export function register(config) {
   if ('serviceWorker' in navigator) {
@@ -39,7 +96,16 @@ export function register(config) {
 
         // Add some additional logging to localhost, pointing developers to the
         // service worker/PWA documentation.
-        navigator.serviceWorker.ready.then(() => {
+        navigator.serviceWorker.ready.then((swReg) => {
+          if ('Notification' in window) {
+            Notification.requestPermission((result) => {
+              if (result === 'granted') {
+                configurePushSub(swReg)
+              } else {
+                console.log("no permission granted")
+              }
+            })
+          }
         });
       } else {
         // Is not localhost. Just register service worker
