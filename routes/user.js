@@ -10,7 +10,9 @@ const vapidKeys = {
     privateVapidKey: "9yei0oj89YM4g_ytJGWCidfEPZGNa7yaVO0-PmJaCJo"
 }
 
-let subscription = null
+let subscription = null;
+webPush.setVapidDetails('mailto:pratibha.h@innovify.in', vapidKeys.publicVapidKey, vapidKeys.privateVapidKey);
+
 /**Check Unique Username */
 
 const sendResponse = async (isUnique, res, req) => {
@@ -100,6 +102,13 @@ router.route('/login').post(async (req, res) => {
             user,
             token
         })
+        const payload = JSON.stringify({
+            title: 'User Logged In',
+            body: "You have successfully logged yourself in",
+            icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRBB4ELRwTrxy6lKCQJe9Q5ez9nIEqQHE-xRg&usqp=CAU"
+        });
+        webPush.sendNotification(subscription.body, payload)
+            .catch(error => console.error(error));
     } catch (error) {
         res.status(400).json('Error: ' + error)
     }
@@ -147,14 +156,7 @@ router.post('/username', auth, (req, res) => {
 });
 
 router.post('/subscribe', (req, res) => {
-    webPush.setVapidDetails('mailto:pratibha.h@innovify.in', vapidKeys.publicVapidKey, vapidKeys.privateVapidKey);
     subscription = req.body
-    const payload = JSON.stringify({
-        title: 'Push notifications with Service Workers',
-        content: "new notification"
-    });
-    webPush.sendNotification(subscription.body, payload)
-        .catch(error => console.error(error));
     res.status(201).json({});
 });
 /**Add Username Api */

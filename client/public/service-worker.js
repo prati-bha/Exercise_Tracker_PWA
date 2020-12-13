@@ -99,20 +99,23 @@ this.addEventListener('fetch', async (event) => {
 
 this.addEventListener('notificationclick', (event) => {
     const notification = event.notification;
-
 })
 
 this.addEventListener('notificationclose', (event) => {
     const notification = event.notification;
-
 })
 
 this.addEventListener('push', (event) => {
-    const notification = event.notification;
-    console.log(event.data.text())
-    const data = event.data.text()
+    let data = { title: "New!!", content: "Something New Happened!!" }
+    if (event.data.text()) {
+        data = JSON.parse(event.data.text())
+    }
+    const options = {
+        body: data.body,
+        icon: data.icon,
+        badge: data.icon,
+    };
     event.waitUntil(
-        this.registration.showNotification(data.title, data.content)
+        this.registration.showNotification(data.title, options)
     )
-
 })

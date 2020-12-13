@@ -23,7 +23,6 @@ const isLocalhost = Boolean(
   )
 );
 const subscribeToServer = (sub) => {
-  console.log("3")
   const payload = {
     body: sub
   }
@@ -60,7 +59,6 @@ const configurePushSub = (swReg) => {
   swReg.pushManager.getSubscription().then((sub) => {
     if (sub === null) {
       const VAPID_PUBLIC_KEY = "BIiXsNrUfJ4v4kIwiShRyslSi742Z9AkC_P4bgkUOzz1NSjvI85kXAU_-fXn5xaqkfTzSQLFZmgCo5QW2GAx6Xk"
-      console.log(urlBase64ToUint8Array(VAPID_PUBLIC_KEY))
       swReg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
