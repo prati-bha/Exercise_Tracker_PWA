@@ -1,7 +1,7 @@
 const router = require('express').Router();
 let Exercise = require('../models/exercise.model');
 const auth = require('../middlewares/auth')
-let User = require('../models/user.model');
+// let User = require('../models/user.model');
 
 const checkUsername = (username) => {
     if (username === null || username === undefined) {
@@ -9,18 +9,21 @@ const checkUsername = (username) => {
     }
     return true
 }
-const isUserAlreadyAvailable = async (username) => {
-    let isUsernameAvailable = false;
-    await User.find({ "username": { $regex: username, $options: 'i' } }).countDocuments((err, count) => {
-        if (err) {
-            res.status(500);
-        }
-        if (!err) {
-            isUsernameAvailable = count > 0;
-        }
-    });
-    return isUsernameAvailable
-}
+/**
+ * No Need right now.
+ */
+// const isUserAlreadyAvailable = async (username) => {
+//     let isUsernameAvailable = false;
+//     await User.find({ "username": { $regex: username, $options: 'i' } }).countDocuments((err, count) => {
+//         if (err) {
+//             res.status(500);
+//         }
+//         if (!err) {
+//             isUsernameAvailable = count > 0;
+//         }
+//     });
+//     return isUsernameAvailable
+// }
 
 router.get('/', auth, async (req, res) => {
     let skip;
@@ -63,7 +66,18 @@ router.post('/add', auth, (req, res) => {
             });
 
             newExercise.save()
-                .then(() => res.json('Exercise added!'))
+                .then(() => {
+                    if (req.subscription !== null) {
+                        const payload = JSON.stringify({
+                            title: 'User Logged The Exercise',
+                            body: "You have successfully logged your exercise",
+                            icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRBB4ELRwTrxy6lKCQJe9Q5ez9nIEqQHE-xRg&usqp=CAU"
+                        });
+                        req.webPush.sendNotification(req.subscription.body, payload)
+                            .catch(error => console.error(error));
+                    }
+                    res.json('Exercise added!')
+                })
                 .catch(err => res.status(400).json('Error: ' + err));
         } else {
             res.status(400).send({

@@ -3,16 +3,7 @@ const validate = require('validator');
 const User = require('../models/user.model');
 const auth = require('../middlewares/auth')
 const multer = require('multer');
-const webPush = require('web-push');
 const { sendWelcomeEmail } = require('../middlewares/email')
-const vapidKeys = {
-    publicVapidKey: "BIiXsNrUfJ4v4kIwiShRyslSi742Z9AkC_P4bgkUOzz1NSjvI85kXAU_-fXn5xaqkfTzSQLFZmgCo5QW2GAx6Xk",
-    privateVapidKey: "9yei0oj89YM4g_ytJGWCidfEPZGNa7yaVO0-PmJaCJo"
-}
-
-let subscription = null;
-webPush.setVapidDetails('mailto:pratibha.h@innovify.in', vapidKeys.publicVapidKey, vapidKeys.privateVapidKey);
-
 /**Check Unique Username */
 
 const sendResponse = async (isUnique, res, req) => {
@@ -96,19 +87,22 @@ router.route('/signUp').post(async (req, res) => {
 /** Login Api */
 router.route('/login').post(async (req, res) => {
     try {
+        if (req.subscription !== null) {
+            const payload = JSON.stringify({
+                title: 'User Logged In',
+                body: "You have successfully logged yourself in",
+                icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRBB4ELRwTrxy6lKCQJe9Q5ez9nIEqQHE-xRg&usqp=CAU"
+            });
+            req.webPush.sendNotification(req.subscription.body, payload)
+                .catch(error => console.error(error));
+        }
         const user = await User.findByCredentials(req.body.email, req.body.password)
         const token = await user.generateAuthToken();
         res.status(200).send({
             user,
             token
         })
-        const payload = JSON.stringify({
-            title: 'User Logged In',
-            body: "You have successfully logged yourself in",
-            icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRBB4ELRwTrxy6lKCQJe9Q5ez9nIEqQHE-xRg&usqp=CAU"
-        });
-        webPush.sendNotification(subscription.body, payload)
-            .catch(error => console.error(error));
+
     } catch (error) {
         res.status(400).json('Error: ' + error)
     }
@@ -155,10 +149,6 @@ router.post('/username', auth, (req, res) => {
     }
 });
 
-router.post('/subscribe', (req, res) => {
-    subscription = req.body
-    res.status(201).json({});
-});
 /**Add Username Api */
 
 /** upload Image api */

@@ -10,7 +10,7 @@ export const ENDPOINTS = {
   ADD_EXERCISE: `${API_URL}/exercises/add`,
   UPDATE_EXERCISE: `${API_URL}/exercises/update/`,
   LOGOUT: `${API_URL}/users/logout`,
-  SUBSCRIBE: `${API_URL}/users/subscribe`,
+  SUBSCRIBE: `${API_URL}/subscribe`,
 };
 
 export const getToken = {
