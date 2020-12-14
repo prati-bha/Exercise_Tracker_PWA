@@ -1,5 +1,5 @@
 const CACHE_STATIC_NAME = 'static-v2';
-const CACHE_DYNAMIC_NAME = 'dynamic-v2';
+const CACHE_DYNAMIC_NAME = 'dynamic-v1';
 const STATIC_FILES = [
     '/',
     '/index.html',
@@ -10,7 +10,8 @@ const STATIC_FILES = [
     '/app-icon-144x144.png',
     '/login',
     '/favicon.ico',
-    '/offline.html'
+    '/offline.html',
+    '/manifest.json'
 ];
 
 this.addEventListener('install', function (event) {
@@ -39,27 +40,59 @@ this.addEventListener('activate', function (event) {
     );
     return self.clients.claim();
 });
-this.addEventListener('fetch', (event) => {
-    console.log("[from service worker]", event.request.url);
-    event.respondWith(
-        caches.match(event.request).then(function (response) {
-            if (response) {
+
+function isInArray(string, array) {
+    let cachePath;
+    if (string.indexOf(self.origin) === 0) { // request targets domain where we serve the page from (i.e. NOT a CDN)
+        cachePath = string.substring(self.origin.length); // take the part of the URL AFTER the domain (e.g. after localhost:8080)
+    } else {
+        cachePath = string; // store the full request (for CDNs)
+    }
+    return array.indexOf(cachePath) > -1;
+}
+this.addEventListener('fetch', async (event) => {
+    if (isInArray(event.request.url, STATIC_FILES)) {
+        event.respondWith(
+            caches.match(event.request).then(function (response) {
                 return response
-            } else {
-                fetch(event.request.url).then(async (res) => {
-                    return caches.open(CACHE_DYNAMIC_NAME).then((cache) => {
-                        cache.put(event.request.url, res.clone())
-                        return res
-                    });
-                }).catch(async (err) => {
-                    console.log("error test error", err)
-                    return caches.open(CACHE_STATIC_NAME)
-                        .then(function (cache) {
-                            console.log("coming here", cache)
-                            return cache.match('/offline.html');
+            }))
+    }
+    else if (navigator.onLine) {
+        event.respondWith(
+            caches.match(event.request).then(function (response) {
+                if (response) {
+                    fetch(event.request)
+                        .then(function (res) {
+                            caches.open(CACHE_DYNAMIC_NAME)
+                                .then(function (cache) {
+                                    cache.put(event.request.url, res.clone());
+                                })
                         })
-                });
-            }
-        })
-    );
+                    return response
+                } else {
+                    return fetch(event.request)
+                        .then(function (res) {
+                            return caches.open(CACHE_DYNAMIC_NAME)
+                                .then(function (cache) {
+                                    cache.put(event.request.url, res.clone());
+                                    return res;
+                                })
+                        })
+                }
+            }))
+    }
+    else {
+        event.respondWith(
+            caches.match(event.request).then(function (response) {
+                if (response) {
+                    return response
+                }
+                else if (event.request.headers.get('accept').includes('text/html')) {
+                    return caches.match('/offline.html');
+                } else {
+                    return new Response();
+                }
+            })
+        )
+    }
 })
