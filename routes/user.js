@@ -87,12 +87,22 @@ router.route('/signUp').post(async (req, res) => {
 /** Login Api */
 router.route('/login').post(async (req, res) => {
     try {
+        if (req.subscription !== null) {
+            const payload = JSON.stringify({
+                title: 'User Logged In',
+                body: "You have successfully logged yourself in",
+                icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRBB4ELRwTrxy6lKCQJe9Q5ez9nIEqQHE-xRg&usqp=CAU"
+            });
+            req.webPush.sendNotification(req.subscription.body, payload)
+                .catch(error => console.error(error));
+        }
         const user = await User.findByCredentials(req.body.email, req.body.password)
         const token = await user.generateAuthToken();
         res.status(200).send({
             user,
             token
         })
+
     } catch (error) {
         res.status(400).json('Error: ' + error)
     }
@@ -138,6 +148,7 @@ router.post('/username', auth, (req, res) => {
         })
     }
 });
+
 /**Add Username Api */
 
 /** upload Image api */
