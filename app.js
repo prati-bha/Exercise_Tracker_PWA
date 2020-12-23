@@ -21,6 +21,7 @@ connection.once('open', () => {
 })
 const app = express();
 let subscription = null;
+app.use(cors({ origin: '*' }));
 app.post('/subscribe', bodyParser, (req, res) => {
     subscription = req.body
     res.status(201).json({});
@@ -35,6 +36,5 @@ app.use(function (req, res, next) {
 });
 app.use('/exercises', bodyParser, exerciseRoute);
 app.use('/users', bodyParser, userRoute);
-app.use(cors());
 app.use(express.json());
 module.exports = app;
