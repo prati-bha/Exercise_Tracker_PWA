@@ -1,4 +1,4 @@
-export const API_URL = "https://exercise-tracker-mern-stack.herokuapp.com";
+export const API_URL = "https://pwa-example28.herokuapp.com";
 // export const API_URL = "https://74db17a0755e.ngrok.io";
 
 export const ENDPOINTS = {
