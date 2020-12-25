@@ -1,7 +1,6 @@
-/* eslint-disable no-unused-vars */
-
 import React, { Component } from "react";
-import { Link } from "react-router-dom";
+import { withRouter } from "react-router-dom";
+// import { Link } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -12,12 +11,12 @@ import EditIcon from "@material-ui/icons/Edit";
 import "../App.css";
 import { Waypoint } from "react-waypoint";
 import Spinner from "./Spinner/Spinner";
-import usernameContext from "../contexts/UsernameContext";
 
 toast.configure();
 
 const Exercise = (props) => (
   <tr>
+    <td>{props.exercise.username}</td>
     <div className="desc">
       <td>{props.exercise.description}</td>
     </div>
@@ -38,7 +37,7 @@ const Exercise = (props) => (
           color="primary"
           href={"/edit/" + props.exercise._id}
           onClick={() => {
-            window.location.href = "/edit/" + props.exercise._id;
+            props.history.push(`/edit/${props.exercise._id}`);
           }}
         />
       </IconButton>{" "}
@@ -56,8 +55,7 @@ const Exercise = (props) => (
   </tr>
 );
 
-export default class ExercisesList extends Component {
-  static contextType = usernameContext
+class ExercisesList extends Component {
   constructor(props) {
     super(props);
 
@@ -84,13 +82,9 @@ export default class ExercisesList extends Component {
     this.setState({
       loading: true,
     });
-    const token = this.context.token
     axios
       .get(
-        `${ENDPOINTS.EXERCISES}?pageNum=${this.state.pageNum}&limit=${this.state.limit}`,
-        {
-          headers: token,
-        }
+        `${ENDPOINTS.EXERCISES}?pageNum=${this.state.pageNum}&limit=${this.state.limit}`
       )
       .then((response) => {
         this.setState({
@@ -105,14 +99,10 @@ export default class ExercisesList extends Component {
   }
 
   deleteExercise(id) {
-    axios
-      .delete(`${ENDPOINTS.EXERCISES}/${id}`, {
-        headers: this.context.token,
-      })
-      .then((response) => {
-        this.notify("Exercise Deleted!");
-        return console.log(response.data);
-      });
+    axios.delete(`${ENDPOINTS.EXERCISES}/${id}`).then((response) => {
+      this.notify("Exercise Deleted!");
+      return console.log(response.data);
+    });
 
     this.setState({
       exercises: this.state.exercises.filter((el) => el._id !== id),
@@ -126,10 +116,7 @@ export default class ExercisesList extends Component {
     });
     axios
       .get(
-        `${ENDPOINTS.EXERCISES}?pageNum=${this.state.pageNum}&limit=${this.state.limit}`,
-        {
-          headers: 'abcd',
-        }
+        `${ENDPOINTS.EXERCISES}?pageNum=${this.state.pageNum}&limit=${this.state.limit}`
       )
       .then((response) => {
         this.setState({
@@ -150,6 +137,7 @@ export default class ExercisesList extends Component {
           exercise={currentexercise}
           deleteExercise={this.deleteExercise}
           key={currentexercise._id}
+          {...this.props}
         />
         {this.state.hasNext && i === this.state.exercises.length - 1 && (
           <Waypoint onEnter={() => this.setPageIndex()} />
@@ -166,6 +154,7 @@ export default class ExercisesList extends Component {
         <table className="table">
           <thead className="thead-light">
             <tr>
+              <th>Username</th>
               <th>Description</th>
               <th>Duration</th>
               <th>Date</th>
@@ -179,3 +168,4 @@ export default class ExercisesList extends Component {
     );
   }
 }
+export default withRouter(ExercisesList)

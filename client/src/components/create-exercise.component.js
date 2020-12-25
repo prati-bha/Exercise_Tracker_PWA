@@ -1,8 +1,6 @@
-/* eslint-disable no-unused-vars */
-
 import React, { Component } from "react";
 import axios from "axios";
-import DatePicker from "react-datepicker";
+// import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -10,42 +8,51 @@ import { withRouter } from "react-router-dom";
 import { ENDPOINTS } from "../constant";
 import {
   FormControl,
-  FormHelperText,
+  // FormHelperText,
   InputLabel,
   MenuItem,
   Select,
   TextField,
 } from "@material-ui/core";
 import moment from "moment";
-import Modal from "./Modal/Modal";
-import CustomizedDialogs from "./Modal/Modal";
-import usernameContext from '../contexts/UsernameContext'
-
 toast.configure();
 class CreateExercise extends Component {
-  static contextType = usernameContext
   constructor(props) {
     super(props);
+    this.onChangeUsername = this.onChangeUsername.bind(this);
     this.onChangeDescription = this.onChangeDescription.bind(this);
     this.onChangeDuration = this.onChangeDuration.bind(this);
     this.onChangeDate = this.onChangeDate.bind(this);
     this.onSubmit = this.onSubmit.bind(this);
     this.state = {
+      username: "",
       description: "",
       duration: "",
       date: moment(new Date()).format("YYYY-MM-DD"),
+      users: [],
       validMinutes: true,
       validDescLength: true,
       errorMessage: "",
-      hasUsername: true,
     };
   }
   componentDidMount() {
-    if (this.context.username === null) {
-      this.setState({
-        hasUsername: false,
+    axios
+      .get(ENDPOINTS.USERS)
+      .then((response) => {
+        if (response.data.length > 0) {
+          this.setState({
+            users: response.data.map((user) => user.username),
+          });
+        }
+      })
+      .catch((error) => {
+        console.log(error);
       });
-    }
+  }
+  onChangeUsername(e) {
+    this.setState({
+      username: e.target.value,
+    });
   }
   onChangeDescription(e) {
     this.setState({
@@ -87,31 +94,45 @@ class CreateExercise extends Component {
     const { history } = this.props;
     e.preventDefault();
     const exercise = {
+      username: this.state.username,
       description: this.state.description,
       duration: this.state.duration,
       date: this.state.date,
     };
     console.log(exercise);
-    axios
-      .post(ENDPOINTS.ADD_EXERCISE, exercise, {
-        headers: this.context.token,
-      })
-      .then((res) => {
-        this.notify("Exercise Added!");
-        history.push("/");
-        return console.log(res.data);
-      });
+    axios.post(ENDPOINTS.ADD_EXERCISE, exercise).then((res) => {
+      this.notify("Exercise Added!");
+      history.push("/");
+      return console.log(res.data);
+    });
   }
   render() {
-    if (!this.state.hasUsername) {
-      return <CustomizedDialogs open />;
-    }
     return (
       <div className="exercise-container">
-        <Modal show></Modal>
         <h3>Create New Exercise Log</h3>
         <form onSubmit={this.onSubmit}>
           <div className="form-group">
+            <FormControl variant="outlined">
+              <InputLabel id="demo-simple-select-outlined-label">
+                Username
+              </InputLabel>
+              <Select
+                labelId="demo-simple-select-outlined-label"
+                id="demo-simple-select-outlined"
+                label="Username"
+                value={this.state.username}
+                onChange={this.onChangeUsername}
+                style={{ maxWidth: 300, minWidth: 300, textAlign: "left" }}
+              >
+                {this.state.users.map(function (user) {
+                  return (
+                    <MenuItem key={user} value={user}>
+                      {user}
+                    </MenuItem>
+                  );
+                })}
+              </Select>
+            </FormControl>
           </div>
           <div className="form-group">
             {/* <label>Description: </label>
@@ -206,6 +227,7 @@ class CreateExercise extends Component {
               value="Create Exercise Log"
               className="btn btn-primary exercise-container-btn"
               disabled={
+                !this.state.username ||
                 this.state.description.length === 0 ||
                 !this.state.duration ||
                 !this.state.validMinutes ||

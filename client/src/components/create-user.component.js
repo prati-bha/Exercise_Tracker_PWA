@@ -1,17 +1,14 @@
 import React, { Component } from "react";
-import { withRouter } from 'react-router-dom';
 import axios from "axios";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { TextField } from "@material-ui/core";
 import { ENDPOINTS } from "../constant";
-import usernameContext from '../contexts/UsernameContext'
 import "../App.css";
 import validator from "validator";
 
 toast.configure();
-class CreateUser extends Component {
-  static contextType = usernameContext
+export default class CreateUser extends Component {
   constructor(props) {
     super(props);
 
@@ -58,9 +55,7 @@ class CreateUser extends Component {
       });
     }
     axios
-      .get(`${ENDPOINTS.CHECK_USERNAME}?username=${e.target.value}`, {
-        headers: this.context.token,
-      })
+      .get(`${ENDPOINTS.CHECK_USERNAME}?username=${e.target.value}`)
       .then((res) => this.setState({ error: false, unique: true }))
       .catch((err) =>
         this.setState({
@@ -72,19 +67,20 @@ class CreateUser extends Component {
   }
 
   onSubmit(e) {
+    const { history } = this.props;
     e.preventDefault();
+
     const user = {
       username: this.state.username,
     };
-    axios
-      .post(ENDPOINTS.CHECK_USERNAME, user, {
-        headers: this.context.token,
-      })
-      .then((res) => {
-        this.notify("User Added!");
-        this.props.history.push("/create");
-        return console.log(res.data);
-      });
+
+    console.log(user);
+
+    axios.post(ENDPOINTS.ADD_USER, user).then((res) => {
+      this.notify("User Added!");
+      history.push("/create");
+      return console.log(res.data);
+    });
 
     this.setState({
       username: "",
@@ -100,6 +96,7 @@ class CreateUser extends Component {
         <form onSubmit={this.onSubmit}>
           <div className="form-group">
             <TextField
+              
               variant="outlined"
               error={
                 this.state.error ||
@@ -129,5 +126,3 @@ class CreateUser extends Component {
     );
   }
 }
-
-export default withRouter(CreateUser);
