@@ -1,4 +1,5 @@
 const CACHE_STATIC_NAME = 'static-v2';
+const API_URL = "http://localhost:2910";
 const CACHE_DYNAMIC_NAME = 'dynamic-v1';
 const STATIC_FILES = [
     '/',
@@ -8,7 +9,6 @@ const STATIC_FILES = [
     '/static/js/0.chunk.js.map',
     '/static/js/main.chunk.js',
     '/app-icon-144x144.png',
-    '/login',
     '/favicon.ico',
     '/offline.html',
     '/manifest.json'
@@ -118,4 +118,116 @@ this.addEventListener('push', (event) => {
     event.waitUntil(
         this.registration.showNotification(data.title, options)
     )
+});
+const postData = (data) => {
+    for (let dt of data) {
+        const exercise = JSON.stringify({
+            username: dt.username,
+            description: dt.description,
+            duration: dt.duration,
+            date: dt.date,
+        });
+        fetch(`http://localhost:2910/exercises/add`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            body: exercise
+        }).then((res) => {
+            if (res.ok) {
+                res.json()
+                    .then(function () {
+                        initializeStore('delete', 'sync-exercise-logs', dt.username)
+                    });
+            }
+        }).catch(function (err) {
+            console.log('Error while sending data', err);
+        });
+    }
+}
+const initializeStore = (action, st, dataToDelete) => {
+    const result = indexedDB.open('exercise-store', 1);
+    result.onsuccess = (event) => {
+        const db = event.target.result;
+        const tx = db.transaction(st, 'readwrite');
+        const store = tx.objectStore(st);
+        store.getAll().onsuccess = (event) => {
+            const res = event.target.result;
+            if (action === 'save') {
+                postData(res);
+            } else {
+                store.delete(dataToDelete);
+            }
+        }
+    }
+}
+
+const readAllData = (st) => {
+    initializeStore('save', st);
+}
+this.addEventListener('sync', function (event) {
+    if (event.tag === 'sync-new-posts') {
+        console.log('[Service Worker] Syncing new Posts');
+        event.waitUntil(readAllData('sync-exercise-logs'));
+    }
 })
+
+/**
+ *  Note: Caching Strategies
+self.addEventListener('fetch', function(event) {
+  event.respondWith(
+    caches.match(event.request)
+      .then(function(response) {
+        if (response) {
+          return response;
+        } else {
+          return fetch(event.request)
+            .then(function(res) {
+              return caches.open(CACHE_DYNAMIC_NAME)
+                .then(function(cache) {
+                  cache.put(event.request.url, res.clone());
+                  return res;
+                })
+            })
+            .catch(function(err) {
+              return caches.open(CACHE_STATIC_NAME)
+                .then(function(cache) {
+                  return cache.match('/offline.html');
+                });
+            });
+        }
+      })
+  );
+});
+
+self.addEventListener('fetch', function(event) {
+  event.respondWith(
+    fetch(event.request)
+      .then(function(res) {
+        return caches.open(CACHE_DYNAMIC_NAME)
+                .then(function(cache) {
+                  cache.put(event.request.url, res.clone());
+                  return res;
+                })
+      })
+      .catch(function(err) {
+        return caches.match(event.request);
+      })
+  );
+});
+
+Cache-only
+self.addEventListener('fetch', function (event) {
+  event.respondWith(
+    caches.match(event.request)
+  );
+});
+
+Network-only
+self.addEventListener('fetch', function (event) {
+  event.respondWith(
+    fetch(event.request)
+  );
+});
+*/

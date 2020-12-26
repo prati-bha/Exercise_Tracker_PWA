@@ -1,9 +1,9 @@
 import React from "react";
-import { BrowserRouter as Router, Route } from "react-router-dom";
+import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 // import logo from "./logo.svg";
 import "./App.css";
 import "bootstrap/dist/css/bootstrap.min.css";
-
+import NotFound from "./components/404/NotFound";
 import Navbar from "./components/navbar.component";
 import ExercisesList from "./components/exercises-list.component";
 import EditExercise from "./components/edit-exercise.component";
@@ -16,10 +16,13 @@ function App() {
       <div className="container">
         <Navbar />
         <br />
-        <Route path="/" exact component={ExercisesList} />
-        <Route path="/edit/:id" component={EditExercise} />
-        <Route path="/create" component={CreateExercise} />
-        <Route path="/user" component={CreateUser} />
+        <Switch>
+          <Route exact path="/" component={ExercisesList} />
+          <Route exact path="/edit/:id" component={EditExercise} />
+          <Route exact path="/create" component={CreateExercise} />
+          <Route exact path="/user" component={CreateUser} />
+          <Route exact component={NotFound} />
+        </Switch>
       </div>
     </Router>
   );

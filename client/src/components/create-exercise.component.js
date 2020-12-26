@@ -94,17 +94,54 @@ class CreateExercise extends Component {
     const { history } = this.props;
     e.preventDefault();
     const exercise = {
+      id: 101,
       username: this.state.username,
       description: this.state.description,
       duration: this.state.duration,
       date: this.state.date,
     };
-    console.log(exercise);
-    axios.post(ENDPOINTS.ADD_EXERCISE, exercise).then((res) => {
-      this.notify("Exercise Added!");
-      history.push("/");
-      return console.log(res.data);
-    });
+
+    if ('serviceWorker' in navigator && 'SyncManager' in window && !navigator.onLine) {
+      async function writeData(st, data) {
+        let tx;
+        const result = await window.indexedDB.open('exercise-store', 1);
+        result.onupgradeneeded = function (event) {
+          const db = event.target.result;
+          if (!db.objectStoreNames.contains(st)) {
+            const store = db.createObjectStore(st, { keyPath: 'username' });
+            store.transaction.oncomplete = () => {
+              tx = db.transaction(st, 'readwrite');
+              const objStore = tx.objectStore(st);
+              objStore.put(data);
+            }
+          }
+        };
+      }
+      const title = "User Logged The Exercise";
+      const options = {
+        title: 'User Logged The Exercise',
+        body: "You are offline and Your Exercise Log was Saved For Syncing.",
+        icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRBB4ELRwTrxy6lKCQJe9Q5ez9nIEqQHE-xRg&usqp=CAU"
+      };
+      navigator.serviceWorker.ready
+        .then(function (sw) {
+          writeData('sync-exercise-logs', exercise).then(() => {
+            return sw.sync.register('sync-new-posts');
+          }).then(() => {
+            sw.showNotification(title, options);
+            history.push("/");
+          })
+            .catch(function (err) {
+              console.log(err);
+            });
+        });
+    } else {
+      axios.post(ENDPOINTS.ADD_EXERCISE, exercise).then((res) => {
+        this.notify("Exercise Added!");
+        history.push("/");
+        return console.log(res.data);
+      });
+    }
   }
   render() {
     return (
@@ -135,14 +172,6 @@ class CreateExercise extends Component {
             </FormControl>
           </div>
           <div className="form-group">
-            {/* <label>Description: </label>
-            <input
-              type="text"
-              required
-              className="form-control"
-              value={this.state.description}
-              onChange={this.onChangeDescription}
-            /> */}
             <TextField
               error={!this.state.validDescLength}
               helperText={
