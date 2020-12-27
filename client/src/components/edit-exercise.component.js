@@ -1,37 +1,33 @@
-/* eslint-disable no-unused-vars */
-
 import React, { Component } from "react";
 import axios from "axios";
-import DatePicker from "react-datepicker";
+// import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { withRouter } from "react-router-dom";
-import { ENDPOINTS } from "../constant";
+import { EDITED_EXERCISE_SYNC_TAG, EDITED_EXERCISE_OBJECT_STORE, ENDPOINTS, SYNCED_DATABASE } from "../constant";
 import {
   FormControl,
-  FormHelperText,
+  // FormHelperText,
   InputLabel,
   MenuItem,
   Select,
   TextField,
 } from "@material-ui/core";
 import moment from "moment";
-import CustomizedDialogs from "./Modal/Modal";
-import usernameContext from '../contexts/UsernameContext'
 
 toast.configure();
 class EditExercise extends Component {
-  static contextType = usernameContext
   constructor(props) {
     super(props);
-
+    this.onChangeUsername = this.onChangeUsername.bind(this);
     this.onChangeDescription = this.onChangeDescription.bind(this);
     this.onChangeDuration = this.onChangeDuration.bind(this);
     this.onChangeDate = this.onChangeDate.bind(this);
     this.onSubmit = this.onSubmit.bind(this);
 
     this.state = {
+      username: "",
       description: "",
       duration: "",
       date: moment(new Date()).format("YYYY-MM-DD"),
@@ -39,21 +35,12 @@ class EditExercise extends Component {
       validMinutes: true,
       validDescLength: true,
       errorMessage: "",
-      hasUsername: true,
     };
   }
 
   componentDidMount() {
-
-    if (this.context.username === null) {
-      this.setState({
-        hasUsername: false,
-      });
-    }
     axios
-      .get(`${ENDPOINTS.EXERCISES}/${this.props.match.params.id}`, {
-        headers: this.context.token,
-      })
+      .get(`${ENDPOINTS.EXERCISES}/${this.props.match.params.id}`)
       .then((response) => {
         this.setState({
           username: response.data.username,
@@ -67,9 +54,25 @@ class EditExercise extends Component {
         console.log(error);
       });
 
-
+    axios
+      .get(ENDPOINTS.USERS)
+      .then((response) => {
+        if (response.data.length > 0) {
+          this.setState({
+            users: response.data.map((user) => user.username),
+          });
+        }
+      })
+      .catch((error) => {
+        console.log(error);
+      });
   }
 
+  onChangeUsername(e) {
+    this.setState({
+      username: e.target.value,
+    });
+  }
 
   onChangeDescription(e) {
     this.setState({
@@ -111,44 +114,92 @@ class EditExercise extends Component {
 
   onSubmit(e) {
     const { history } = this.props;
+    const props = this.props;
     e.preventDefault();
 
     const exercise = {
+      username: this.state.username,
       description: this.state.description,
       duration: this.state.duration,
       date: this.state.date,
     };
+    if ('serviceWorker' in navigator && 'SyncManager' in window && !navigator.onLine) {
+      async function writeData(st, data) {
+        let tx;
+        const result = await window.indexedDB.open(SYNCED_DATABASE, 1);
+        result.onupgradeneeded = function (event) {
+          const db = event.target.result;
+          if (!db.objectStoreNames.contains(st)) {
+            const store = db.createObjectStore(st, { keyPath: 'username' });
+            store.transaction.oncomplete = () => {
+              console.log(st)
+              tx = db.transaction(st, 'readwrite');
+              const objStore = tx.objectStore(st);
+              data.userID = props.match.params.id;
+              objStore.put(data);
+            }
+          }
+        };
+      }
+      const title = "User Logged The Exercise";
+      const options = {
+        title: 'User Logged The Exercise',
+        body: "You are offline and Your Exercise Log was Saved For Syncing.",
+        icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRBB4ELRwTrxy6lKCQJe9Q5ez9nIEqQHE-xRg&usqp=CAU"
+      };
+      navigator.serviceWorker.ready
+        .then(function (sw) {
+          writeData(EDITED_EXERCISE_OBJECT_STORE, exercise).then(() => {
+            return sw.sync.register(EDITED_EXERCISE_SYNC_TAG);
+          }).then(() => {
+            sw.showNotification(title, options);
+            history.push("/");
+          })
+            .catch(function (err) {
+              console.log(err);
+            });
+        });
+    } else {
 
-    console.log(exercise);
-
-    axios
-      .post(ENDPOINTS.UPDATE_EXERCISE + this.props.match.params.id, exercise, {
-        headers: this.context.token,
-      })
-      .then((res) => {
-        this.notify("Exercise Updated!");
-        history.push("/");
-        return console.log(res.data);
-      });
+      axios
+        .post(ENDPOINTS.UPDATE_EXERCISE + this.props.match.params.id, exercise)
+        .then((res) => {
+          this.notify("Exercise Updated!");
+          history.push("/");
+          return console.log(res.data);
+        });
+    }
   }
 
   render() {
-    if (!this.state.hasUsername) {
-      return <CustomizedDialogs open />;
-    }
     return (
       <div className="exercise-container">
-        <h3>Edit Exercise Log</h3>
+        <h3>Create New Exercise Log</h3>
         <form onSubmit={this.onSubmit}>
           <div className="form-group">
-            {/* <label>Description: </label>
-            <input
-              type="text"
-              required
-              className="form-control"
-              value={this.state.description}
-              onChange={this.onChangeDescription}
-            /> */}
+            <FormControl variant="outlined">
+              <InputLabel id="demo-simple-select-outlined-label">
+                Username
+              </InputLabel>
+              <Select
+                labelId="demo-simple-select-outlined-label"
+                id="demo-simple-select-outlined"
+                label="Username"
+                value={this.state.username}
+                onChange={this.onChangeUsername}
+                style={{ maxWidth: 300, minWidth: 300, textAlign: "left" }}
+              >
+                {this.state.users.map(function (user) {
+                  return (
+                    <MenuItem key={user} value={user}>
+                      {user}
+                    </MenuItem>
+                  );
+                })}
+              </Select>
+            </FormControl>
+          </div>
+          <div className="form-group">
             <TextField
               error={!this.state.validDescLength}
               helperText={
@@ -167,13 +218,6 @@ class EditExercise extends Component {
             />
           </div>
           <div className="form-group">
-            {/* <label>Duration (in minutes): </label>
-            <input
-              type="number"
-              className="form-control"
-              value={this.state.duration}
-              onChange={this.onChangeDuration}
-            /> */}
             <TextField
               error={!this.state.validMinutes}
               helperText={
@@ -233,6 +277,7 @@ class EditExercise extends Component {
               value="Edit Exercise Log"
               className="btn btn-primary exercise-container-btn"
               disabled={
+                !this.state.username ||
                 this.state.description.length === 0 ||
                 !this.state.duration ||
                 !this.state.validMinutes

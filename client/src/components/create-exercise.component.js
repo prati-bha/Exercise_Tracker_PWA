@@ -1,16 +1,14 @@
-/* eslint-disable no-unused-vars */
-
 import React, { Component } from "react";
 import axios from "axios";
-import DatePicker from "react-datepicker";
+// import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { withRouter } from "react-router-dom";
-import { ENDPOINTS } from "../constant";
+import { ENDPOINTS, NEW_EXERCISE_OBJECT_STORE, NEW_EXERCISE_SYNC_TAG, SYNCED_DATABASE } from "../constant";
 import {
   FormControl,
-  FormHelperText,
+  // FormHelperText,
   InputLabel,
   MenuItem,
   Select,
@@ -19,21 +17,21 @@ import {
 import moment from "moment";
 import Modal from "./Modal/Modal";
 import CustomizedDialogs from "./Modal/Modal";
-import usernameContext from '../contexts/UsernameContext'
-
 toast.configure();
 class CreateExercise extends Component {
-  static contextType = usernameContext
   constructor(props) {
     super(props);
+    this.onChangeUsername = this.onChangeUsername.bind(this);
     this.onChangeDescription = this.onChangeDescription.bind(this);
     this.onChangeDuration = this.onChangeDuration.bind(this);
     this.onChangeDate = this.onChangeDate.bind(this);
     this.onSubmit = this.onSubmit.bind(this);
     this.state = {
+      username: "",
       description: "",
       duration: "",
       date: moment(new Date()).format("YYYY-MM-DD"),
+      users: [],
       validMinutes: true,
       validDescLength: true,
       errorMessage: "",
@@ -41,11 +39,28 @@ class CreateExercise extends Component {
     };
   }
   componentDidMount() {
-    if (this.context.username === null) {
-      this.setState({
-        hasUsername: false,
+    axios
+      .get(ENDPOINTS.USERS)
+      .then((response) => {
+        if (response.data.length > 0) {
+          this.setState({
+            users: response.data.map((user) => user.username),
+            hasUsername: true,
+          });
+        } else {
+          this.setState({
+            hasUsername: false,
+          });
+        }
+      })
+      .catch((error) => {
+        console.log(error);
       });
-    }
+  }
+  onChangeUsername(e) {
+    this.setState({
+      username: e.target.value,
+    });
   }
   onChangeDescription(e) {
     this.setState({
@@ -87,20 +102,54 @@ class CreateExercise extends Component {
     const { history } = this.props;
     e.preventDefault();
     const exercise = {
+      id: 101,
+      username: this.state.username,
       description: this.state.description,
       duration: this.state.duration,
       date: this.state.date,
     };
-    console.log(exercise);
-    axios
-      .post(ENDPOINTS.ADD_EXERCISE, exercise, {
-        headers: this.context.token,
-      })
-      .then((res) => {
+
+    if ('serviceWorker' in navigator && 'SyncManager' in window && !navigator.onLine) {
+      async function writeData(st, data) {
+        let tx;
+        const result = await window.indexedDB.open(SYNCED_DATABASE, 1);
+        result.onupgradeneeded = function (event) {
+          const db = event.target.result;
+          if (!db.objectStoreNames.contains(st)) {
+            const store = db.createObjectStore(st, { keyPath: 'username' });
+            store.transaction.oncomplete = () => {
+              tx = db.transaction(st, 'readwrite');
+              const objStore = tx.objectStore(st);
+              objStore.put(data);
+            }
+          }
+        };
+      }
+      const title = "User Logged The Exercise";
+      const options = {
+        title: 'User Logged The Exercise',
+        body: "You are offline and Your Exercise Log was Saved For Syncing.",
+        icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRBB4ELRwTrxy6lKCQJe9Q5ez9nIEqQHE-xRg&usqp=CAU"
+      };
+      navigator.serviceWorker.ready
+        .then(function (sw) {
+          writeData(NEW_EXERCISE_OBJECT_STORE, exercise).then(() => {
+            return sw.sync.register(NEW_EXERCISE_SYNC_TAG);
+          }).then(() => {
+            sw.showNotification(title, options);
+            history.push("/");
+          })
+            .catch(function (err) {
+              console.log(err);
+            });
+        });
+    } else {
+      axios.post(ENDPOINTS.ADD_EXERCISE, exercise).then((res) => {
         this.notify("Exercise Added!");
         history.push("/");
         return console.log(res.data);
       });
+    }
   }
   render() {
     if (!this.state.hasUsername) {
@@ -112,16 +161,29 @@ class CreateExercise extends Component {
         <h3>Create New Exercise Log</h3>
         <form onSubmit={this.onSubmit}>
           <div className="form-group">
+            <FormControl variant="outlined">
+              <InputLabel id="demo-simple-select-outlined-label">
+                Username
+              </InputLabel>
+              <Select
+                labelId="demo-simple-select-outlined-label"
+                id="demo-simple-select-outlined"
+                label="Username"
+                value={this.state.username}
+                onChange={this.onChangeUsername}
+                style={{ maxWidth: 300, minWidth: 300, textAlign: "left" }}
+              >
+                {this.state.users.map(function (user) {
+                  return (
+                    <MenuItem key={user} value={user}>
+                      {user}
+                    </MenuItem>
+                  );
+                })}
+              </Select>
+            </FormControl>
           </div>
           <div className="form-group">
-            {/* <label>Description: </label>
-            <input
-              type="text"
-              required
-              className="form-control"
-              value={this.state.description}
-              onChange={this.onChangeDescription}
-            /> */}
             <TextField
               error={!this.state.validDescLength}
               helperText={
@@ -168,23 +230,6 @@ class CreateExercise extends Component {
           <div className="form-group">
             {/* <label>Date: </label> */}
             <div>
-              {/* <DatePicker
-                selected={this.state.date}
-                onChange={this.onChangeDate}
-              /> */}
-              {/* <TextField
-                variant="outlined"
-                id="date"
-                label="Date"
-                type="date"
-                // defaultValue="2017-05-24"
-                className="textField"
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                selected={this.state.date}
-                onChange={this.onChangeDate}
-              /> */}
               <TextField
                 variant="outlined"
                 id="date"
@@ -206,6 +251,7 @@ class CreateExercise extends Component {
               value="Create Exercise Log"
               className="btn btn-primary exercise-container-btn"
               disabled={
+                !this.state.username ||
                 this.state.description.length === 0 ||
                 !this.state.duration ||
                 !this.state.validMinutes ||
