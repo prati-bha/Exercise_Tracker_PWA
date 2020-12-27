@@ -23,15 +23,6 @@ const Exercise = (props) => (
     <td>{props.exercise.duration}</td>
     <td>{props.exercise.date.substring(0, 10)}</td>
     <td>
-      {/* <Link to={"/edit/" + props.exercise._id}>edit</Link>  */}
-      {/* <a
-        href="#"
-        onClick={() => {
-          props.deleteExercise(props.exercise._id);
-        }}
-      >
-        delete
-      </a> */}
       <IconButton aria-label="edit" className="icon-margin">
         <EditIcon
           color="primary"
@@ -89,13 +80,15 @@ class ExercisesList extends Component {
       .then((response) => {
         this.setState({
           hasNext: this.checkDataLimit(response.data),
-          loading: false,
         });
         this.setState({ exercises: response.data });
       })
       .catch((error) => {
         console.log(error);
       });
+    this.setState({
+      loading: false,
+    });
   }
 
   deleteExercise(id) {
@@ -145,6 +138,13 @@ class ExercisesList extends Component {
       </React.Fragment>
     ));
   }
+  noDataFound = () => (
+    <tr>
+      <td></td>
+      <td></td>
+      <td>No Data Found</td>
+    </tr>
+  )
 
   render() {
     const loading = this.state.loading ? <Spinner /> : null;
@@ -161,7 +161,7 @@ class ExercisesList extends Component {
               <th>Actions</th>
             </tr>
           </thead>
-          <tbody>{this.exerciseList()}</tbody>
+          <tbody>{this.state.exercises.length === 0 ? this.noDataFound() : this.exerciseList()}</tbody>
         </table>
         {loading}
       </div>

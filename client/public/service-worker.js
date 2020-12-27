@@ -1,6 +1,16 @@
 const CACHE_STATIC_NAME = 'static-v2';
 const API_URL = "http://localhost:2910";
 const CACHE_DYNAMIC_NAME = 'dynamic-v1';
+const NEW_EXERCISE_OBJECT_STORE = 'sync-new-exercise-logs';
+const EDITED_EXERCISE_OBJECT_STORE = 'sync-edit-exercise-logs';
+const NEW_EXERCISE_SYNC_TAG = 'sync-new-posts';
+const EDITED_EXERCISE_SYNC_TAG = 'sync-edit-posts';
+const SYNCED_DATABASE = 'exercise-store';
+const ENDPOINTS = {
+    ADD_EXERCISE: `${API_URL}/exercises/add`,
+    ADD_USER: `${API_URL}/users/add`,
+    UPDATE_EXERCISE: `${API_URL}/exercises/update/`,
+};
 const STATIC_FILES = [
     '/',
     '/index.html',
@@ -119,7 +129,7 @@ this.addEventListener('push', (event) => {
         this.registration.showNotification(data.title, options)
     )
 });
-const postData = (data) => {
+const postNewExerciseData = (data) => {
     for (let dt of data) {
         const exercise = JSON.stringify({
             username: dt.username,
@@ -127,7 +137,7 @@ const postData = (data) => {
             duration: dt.duration,
             date: dt.date,
         });
-        fetch(`http://localhost:2910/exercises/add`, {
+        fetch(ENDPOINTS.ADD_EXERCISE, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -138,7 +148,35 @@ const postData = (data) => {
             if (res.ok) {
                 res.json()
                     .then(function () {
-                        initializeStore('delete', 'sync-exercise-logs', dt.username)
+                        initializeStore('delete', NEW_EXERCISE_OBJECT_STORE, dt.username)
+                    });
+            }
+        }).catch(function (err) {
+            console.log('Error while sending data', err);
+        });
+    }
+}
+const postEditedExerciseData = (data) => {
+    for (let dt of data) {
+        const exercise = JSON.stringify({
+            username: dt.username,
+            description: dt.description,
+            duration: dt.duration,
+            date: dt.date,
+        });
+        const url = `${ENDPOINTS.UPDATE_EXERCISE}${dt.userID}`;
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            body: exercise
+        }).then((res) => {
+            if (res.ok) {
+                res.json()
+                    .then(function () {
+                        initializeStore('delete', EDITED_EXERCISE_OBJECT_STORE, dt.username)
                     });
             }
         }).catch(function (err) {
@@ -147,7 +185,7 @@ const postData = (data) => {
     }
 }
 const initializeStore = (action, st, dataToDelete) => {
-    const result = indexedDB.open('exercise-store', 1);
+    const result = indexedDB.open(SYNCED_DATABASE, 1);
     result.onsuccess = (event) => {
         const db = event.target.result;
         const tx = db.transaction(st, 'readwrite');
@@ -155,7 +193,12 @@ const initializeStore = (action, st, dataToDelete) => {
         store.getAll().onsuccess = (event) => {
             const res = event.target.result;
             if (action === 'save') {
-                postData(res);
+                if (st === NEW_EXERCISE_OBJECT_STORE) {
+                    postNewExerciseData(res);
+                }
+                if (st === EDITED_EXERCISE_OBJECT_STORE) {
+                    postEditedExerciseData(res);
+                }
             } else {
                 store.delete(dataToDelete);
             }
@@ -167,9 +210,13 @@ const readAllData = (st) => {
     initializeStore('save', st);
 }
 this.addEventListener('sync', function (event) {
-    if (event.tag === 'sync-new-posts') {
-        console.log('[Service Worker] Syncing new Posts');
-        event.waitUntil(readAllData('sync-exercise-logs'));
+    if (event.tag === NEW_EXERCISE_SYNC_TAG) {
+        console.log('[Service Worker] Syncing new Exercises');
+        event.waitUntil(readAllData(NEW_EXERCISE_OBJECT_STORE));
+    }
+    if (event.tag === EDITED_EXERCISE_SYNC_TAG) {
+        console.log('[Service Worker] Syncing edited Exercises');
+        event.waitUntil(readAllData(EDITED_EXERCISE_OBJECT_STORE));
     }
 })
 

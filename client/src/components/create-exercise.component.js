@@ -5,7 +5,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { withRouter } from "react-router-dom";
-import { ENDPOINTS } from "../constant";
+import { ENDPOINTS, NEW_EXERCISE_OBJECT_STORE, NEW_EXERCISE_SYNC_TAG, SYNCED_DATABASE } from "../constant";
 import {
   FormControl,
   // FormHelperText,
@@ -15,6 +15,8 @@ import {
   TextField,
 } from "@material-ui/core";
 import moment from "moment";
+import Modal from "./Modal/Modal";
+import CustomizedDialogs from "./Modal/Modal";
 toast.configure();
 class CreateExercise extends Component {
   constructor(props) {
@@ -33,6 +35,7 @@ class CreateExercise extends Component {
       validMinutes: true,
       validDescLength: true,
       errorMessage: "",
+      hasUsername: true,
     };
   }
   componentDidMount() {
@@ -42,6 +45,11 @@ class CreateExercise extends Component {
         if (response.data.length > 0) {
           this.setState({
             users: response.data.map((user) => user.username),
+            hasUsername: true,
+          });
+        } else {
+          this.setState({
+            hasUsername: false,
           });
         }
       })
@@ -104,7 +112,7 @@ class CreateExercise extends Component {
     if ('serviceWorker' in navigator && 'SyncManager' in window && !navigator.onLine) {
       async function writeData(st, data) {
         let tx;
-        const result = await window.indexedDB.open('exercise-store', 1);
+        const result = await window.indexedDB.open(SYNCED_DATABASE, 1);
         result.onupgradeneeded = function (event) {
           const db = event.target.result;
           if (!db.objectStoreNames.contains(st)) {
@@ -125,8 +133,8 @@ class CreateExercise extends Component {
       };
       navigator.serviceWorker.ready
         .then(function (sw) {
-          writeData('sync-exercise-logs', exercise).then(() => {
-            return sw.sync.register('sync-new-posts');
+          writeData(NEW_EXERCISE_OBJECT_STORE, exercise).then(() => {
+            return sw.sync.register(NEW_EXERCISE_SYNC_TAG);
           }).then(() => {
             sw.showNotification(title, options);
             history.push("/");
@@ -144,8 +152,12 @@ class CreateExercise extends Component {
     }
   }
   render() {
+    if (!this.state.hasUsername) {
+      return <CustomizedDialogs open />;
+    }
     return (
       <div className="exercise-container">
+        <Modal show></Modal>
         <h3>Create New Exercise Log</h3>
         <form onSubmit={this.onSubmit}>
           <div className="form-group">
@@ -218,23 +230,6 @@ class CreateExercise extends Component {
           <div className="form-group">
             {/* <label>Date: </label> */}
             <div>
-              {/* <DatePicker
-                selected={this.state.date}
-                onChange={this.onChangeDate}
-              /> */}
-              {/* <TextField
-                variant="outlined"
-                id="date"
-                label="Date"
-                type="date"
-                // defaultValue="2017-05-24"
-                className="textField"
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                selected={this.state.date}
-                onChange={this.onChangeDate}
-              /> */}
               <TextField
                 variant="outlined"
                 id="date"

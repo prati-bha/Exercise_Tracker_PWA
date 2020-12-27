@@ -5,7 +5,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { withRouter } from "react-router-dom";
-import { ENDPOINTS } from "../constant";
+import { EDITED_EXERCISE_SYNC_TAG, EDITED_EXERCISE_OBJECT_STORE, ENDPOINTS, SYNCED_DATABASE } from "../constant";
 import {
   FormControl,
   // FormHelperText,
@@ -20,7 +20,6 @@ toast.configure();
 class EditExercise extends Component {
   constructor(props) {
     super(props);
-
     this.onChangeUsername = this.onChangeUsername.bind(this);
     this.onChangeDescription = this.onChangeDescription.bind(this);
     this.onChangeDuration = this.onChangeDuration.bind(this);
@@ -115,6 +114,7 @@ class EditExercise extends Component {
 
   onSubmit(e) {
     const { history } = this.props;
+    const props = this.props;
     e.preventDefault();
 
     const exercise = {
@@ -123,16 +123,52 @@ class EditExercise extends Component {
       duration: this.state.duration,
       date: this.state.date,
     };
+    if ('serviceWorker' in navigator && 'SyncManager' in window && !navigator.onLine) {
+      async function writeData(st, data) {
+        let tx;
+        const result = await window.indexedDB.open(SYNCED_DATABASE, 1);
+        result.onupgradeneeded = function (event) {
+          const db = event.target.result;
+          if (!db.objectStoreNames.contains(st)) {
+            const store = db.createObjectStore(st, { keyPath: 'username' });
+            store.transaction.oncomplete = () => {
+              console.log(st)
+              tx = db.transaction(st, 'readwrite');
+              const objStore = tx.objectStore(st);
+              data.userID = props.match.params.id;
+              objStore.put(data);
+            }
+          }
+        };
+      }
+      const title = "User Logged The Exercise";
+      const options = {
+        title: 'User Logged The Exercise',
+        body: "You are offline and Your Exercise Log was Saved For Syncing.",
+        icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRBB4ELRwTrxy6lKCQJe9Q5ez9nIEqQHE-xRg&usqp=CAU"
+      };
+      navigator.serviceWorker.ready
+        .then(function (sw) {
+          writeData(EDITED_EXERCISE_OBJECT_STORE, exercise).then(() => {
+            return sw.sync.register(EDITED_EXERCISE_SYNC_TAG);
+          }).then(() => {
+            sw.showNotification(title, options);
+            history.push("/");
+          })
+            .catch(function (err) {
+              console.log(err);
+            });
+        });
+    } else {
 
-    console.log(exercise);
-
-    axios
-      .post(ENDPOINTS.UPDATE_EXERCISE + this.props.match.params.id, exercise)
-      .then((res) => {
-        this.notify("Exercise Updated!");
-        history.push("/");
-        return console.log(res.data);
-      });
+      axios
+        .post(ENDPOINTS.UPDATE_EXERCISE + this.props.match.params.id, exercise)
+        .then((res) => {
+          this.notify("Exercise Updated!");
+          history.push("/");
+          return console.log(res.data);
+        });
+    }
   }
 
   render() {
@@ -164,14 +200,6 @@ class EditExercise extends Component {
             </FormControl>
           </div>
           <div className="form-group">
-            {/* <label>Description: </label>
-            <input
-              type="text"
-              required
-              className="form-control"
-              value={this.state.description}
-              onChange={this.onChangeDescription}
-            /> */}
             <TextField
               error={!this.state.validDescLength}
               helperText={
@@ -190,13 +218,6 @@ class EditExercise extends Component {
             />
           </div>
           <div className="form-group">
-            {/* <label>Duration (in minutes): </label>
-            <input
-              type="number"
-              className="form-control"
-              value={this.state.duration}
-              onChange={this.onChangeDuration}
-            /> */}
             <TextField
               error={!this.state.validMinutes}
               helperText={
